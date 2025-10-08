@@ -4,7 +4,7 @@
 #include "cpu.hpp"
 #include "memory.hpp"
 
-namespace simulator{
+namespace simulator {
 
 class Simulator {
  public:
@@ -16,7 +16,6 @@ class Simulator {
   Memory memory_;
   Cpu cpu_;
 };
-} // simulator
-
+} // namespace simulator
 
 #endif // SIMULATOR_HPP

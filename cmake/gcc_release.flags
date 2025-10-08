@@ -1,0 +1,10 @@
+-O2
+-DNDEBUG
+-flto=auto
+-Wall
+-Wextra
+-Wpedantic
+-fstack-protector-strong
+-fpie
+-fPIE
+-fomit-frame-pointer

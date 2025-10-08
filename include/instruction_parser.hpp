@@ -35,5 +35,4 @@ class InstructionParser {
 
 } // namespace simulator
 
-
 #endif // INSTRUCTION_PARSER_HPP_
