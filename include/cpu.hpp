@@ -1,5 +1,5 @@
-#ifndef CPU_HPP
-#define CPU_HPP
+#ifndef CPU_HPP_
+#define CPU_HPP_
 
 #include <array>
 #include <cstdint>
@@ -16,6 +16,9 @@ class Cpu {
   struct PiplelineData {
     std::uint32_t raw_instruction;
     Instruction instruction;
+
+    std::uint32_t command_result;
+    std::uint32_t memory_read_data;
   } pipeline_data_;
 
  public:
@@ -27,8 +30,10 @@ class Cpu {
   void fetch();
   void decode();
   void execute();
-  void write();
+  void write_back();
   void advance();
+
+  std::uint32_t execute_rformat(Instruction& instruction);
 
   std::array<std::uint32_t, kNumberOfRegirsters> regirsters_ = {0};
   std::uint32_t program_counter_ = 0;
@@ -39,4 +44,4 @@ class Cpu {
 
 } // namespace simulator
 
-#endif // CPU_HPP
+#endif // CPU_HPP_

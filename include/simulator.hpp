@@ -10,7 +10,7 @@ class Simulator {
  public:
   Simulator(std::size_t memory_size);
 
-  void load_program(const std::uint8_t* program, std::size_t size);
+  void load_program(const std::vector<std::uint8_t>& program);
 
  private:
   Memory memory_;

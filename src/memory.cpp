@@ -3,23 +3,23 @@
 #include <cstdint>
 #include <stdexcept>
 
-// public
-// -------------------------------------------------------------------------------
 
-simulator::Memory::Memory(std::size_t memory_size)
+namespace simulator {
+
+Memory::Memory(std::size_t memory_size)
     : memory_size_(memory_size), data_(memory_size, 0) {}
 
-std::uint8_t simulator::Memory::read_byte(std::uint32_t address) const {
+std::uint8_t Memory::read_byte(std::uint32_t address) const {
   check_address_range(address, kByteAccessSize);
   return data_[address];
 }
 
-void simulator::Memory::write_byte(std::uint32_t address, std::uint8_t byte) {
+void Memory::write_byte(std::uint32_t address, std::uint8_t byte) {
   check_address_range(address, kByteAccessSize);
   data_[address] = byte;
 }
 
-std::uint32_t simulator::Memory::read_word(std::uint32_t address) const {
+std::uint32_t Memory::read_word(std::uint32_t address) const {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
@@ -31,7 +31,7 @@ std::uint32_t simulator::Memory::read_word(std::uint32_t address) const {
   return value;
 }
 
-void simulator::Memory::write_word(std::uint32_t address, std::uint32_t word) {
+void Memory::write_word(std::uint32_t address, std::uint32_t word) {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
@@ -41,7 +41,7 @@ void simulator::Memory::write_word(std::uint32_t address, std::uint32_t word) {
   }
 }
 
-std::vector<std::uint8_t> simulator::Memory::read_block(
+std::vector<std::uint8_t> Memory::read_block(
     std::uint32_t address, std::size_t size) const {
   check_address_range(address, size);
 
@@ -52,18 +52,18 @@ std::vector<std::uint8_t> simulator::Memory::read_block(
   return block;
 }
 
-void simulator::Memory::write_block(std::uint32_t address,
+void Memory::write_block(std::uint32_t address,
                                     const std::vector<std::uint8_t>& block) {
   check_address_range(address, block.size());
 
   std::copy(block.begin(), block.end(), data_.begin() + address);
 }
 
-std::size_t simulator::Memory::size() const {
+std::size_t Memory::size() const {
   return memory_size_;
 }
 
-bool simulator::Memory::is_valid_address(std::uint32_t address) const {
+bool Memory::is_valid_address(std::uint32_t address) const {
   return address < memory_size_;
 }
 
@@ -75,10 +75,7 @@ const std::uint8_t* simulator::Memory::get_row_pointer() const {
   return data_.data();
 }
 
-// private
-// ------------------------------------------------------------------------------
-
-void simulator::Memory::check_allignment(std::uint32_t address,
+void Memory::check_allignment(std::uint32_t address,
                                          std::size_t allignment) {
   if (address % allignment != 0) {
     throw std::runtime_error("Unaligned memory access at address: "
@@ -86,7 +83,7 @@ void simulator::Memory::check_allignment(std::uint32_t address,
   }
 }
 
-void simulator::Memory::check_address_range(std::uint32_t address,
+void Memory::check_address_range(std::uint32_t address,
                                             std::size_t access_size) const {
   if (address + access_size > memory_size_
       || address + access_size < address) {
@@ -95,3 +92,6 @@ void simulator::Memory::check_address_range(std::uint32_t address,
                            + ", size=" + std::to_string(access_size));
   }
 }
+
+} // namespace simulator
+

@@ -35,7 +35,7 @@ target_include_directories(simulator
 target_sources(simulator
     PRIVATE
         src/main.cpp
-        src/cpu.cpp
+        # src/cpu.cpp
         src/memory.cpp
         src/simulator.cpp
         src/instruction_parser.cpp
