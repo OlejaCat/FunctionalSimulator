@@ -45,8 +45,7 @@ std::vector<std::uint8_t> simulator::Memory::read_block(
     std::uint32_t address, std::size_t size) const {
   check_address_range(address, size);
 
-  std::vector<std::uint8_t> block;
-  block.reserve(size);
+  std::vector<std::uint8_t> block(size);
   std::copy(data_.begin() + address, data_.begin() + address + size,
             block.begin());
 
@@ -89,7 +88,7 @@ void simulator::Memory::check_allignment(std::uint32_t address,
 
 void simulator::Memory::check_address_range(std::uint32_t address,
                                             std::size_t access_size) const {
-  if (address + access_size >= memory_size_
+  if (address + access_size > memory_size_
       || address + access_size < address) {
     throw std::range_error("Memory access out of range: address="
                            + std::to_string(address)

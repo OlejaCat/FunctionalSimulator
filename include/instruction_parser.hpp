@@ -19,7 +19,7 @@ namespace itype {
 } // namespace utype
 
 namespace stype {
-  constexpr std::uint32_t kOffsetBitMask = 0x3F;
+  constexpr std::uint32_t kOffsetBitMask = 0x7FF;
   constexpr std::uint32_t kRt2Shift = 11;
   constexpr std::uint32_t kRt1Shift = 16;
   constexpr std::uint32_t kBaseShift = 21;
@@ -77,6 +77,7 @@ class InstructionParser {
  private:
   static constexpr std::uint8_t kStartOpcode = 0xFC;
   static constexpr std::uint8_t kEndOpcode = 0x3F;
+  static constexpr std::uint32_t kShiftToOpcode = 26;
   
   static constexpr std::uint8_t kFourBitMask = 0x0F;
   static constexpr std::uint8_t kFiveBitMask = 0x1F;
@@ -84,10 +85,11 @@ class InstructionParser {
  public:
   static Instruction parse(std::uint32_t raw_instruction);
 
+  static std::uint8_t get_opcode(std::uint32_t instruction);
+
  private:
   static Instruction::Type determine_type(std::uint32_t instruction);
   
-  static std::uint8_t get_opcode(std::uint32_t instruction);
 
   static void parse_rtype(Instruction& instruction);
   static void parse_itype(Instruction& instruction);
