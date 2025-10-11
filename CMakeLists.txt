@@ -35,7 +35,7 @@ target_include_directories(simulator
 target_sources(simulator
     PRIVATE
         src/main.cpp
-        # src/cpu.cpp
+        src/cpu.cpp
         src/memory.cpp
         src/simulator.cpp
         src/instruction_parser.cpp
@@ -54,10 +54,13 @@ if(BUILD_TESTS)
     FetchContent_MakeAvailable(googletest)
     
     add_executable(tests 
-                      tests/instruction_parser_tests.cpp 
-                      src/instruction_parser.cpp
-                      tests/memory_tests.cpp
-                      src/memory.cpp)
+        tests/instruction_parser_tests.cpp 
+        src/instruction_parser.cpp
+        tests/memory_tests.cpp
+        src/memory.cpp
+        tests/cpu_rformat_tests.cpp
+        src/cpu.cpp
+    )
     target_include_directories(tests PRIVATE include/)
     if (ENABLE_DEBUG)
         target_link_libraries(tests GTest::gtest_main)

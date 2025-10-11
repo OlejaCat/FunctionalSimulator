@@ -2,9 +2,13 @@
 #include <stdexcept>
 #include <string>
 
+#include "opcodes.hpp"
+#include "bit_shifts.hpp"
+
 namespace simulator {
 
 std::uint8_t InstructionParser::get_opcode(std::uint32_t instruction) {
+  using namespace shifts;
   std::uint8_t primary_opcode = (instruction >> kOpcodeShift) & kOpcodeMask;
   if (primary_opcode != 0) {
     return primary_opcode;
