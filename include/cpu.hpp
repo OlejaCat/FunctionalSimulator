@@ -10,7 +10,8 @@ namespace simulator {
 
 class Cpu {
  private:
-  static constexpr int kNumberOfRegirsters = 32;
+  static constexpr std::size_t kNumberOfRegirsters = 32;
+  static constexpr std::uint32_t kNumberOfBitsInWord = 32;
   static constexpr std::size_t kInstrucionSize = 4;
 
   struct PiplelineData {

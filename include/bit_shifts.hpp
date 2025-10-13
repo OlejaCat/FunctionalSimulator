@@ -9,6 +9,8 @@ namespace shifts {
   constexpr std::uint8_t  kOpcodeMask = 0x3F;
   constexpr std::uint32_t kOpcodeShift = 26;
 
+  constexpr std::uint32_t kFirst4BitsMask = 0xF0000000;
+
   constexpr std::uint8_t  k5BitMask   = 0x1F;
   constexpr std::uint16_t k11BitMask  = 0x7FF;
   constexpr std::uint16_t k16BitMask  = 0xFFFF;

@@ -1,10 +1,10 @@
 #include "cpu.hpp"
 #include <sys/types.h>
 #include <cstdint>
-#include <iostream>
 #include "instruction_formats.hpp"
 #include "instruction_parser.hpp"
 #include "opcodes.hpp"
+#include "bit_shifts.hpp"
 
 
 namespace simulator {
@@ -67,10 +67,35 @@ void Cpu::execute() {
       execute_branch_format();
       break;
 
+    case opcodes::kCBIT:
+    case opcodes::kSSAT:
+      pipeline_data_.command_result = execute_rd_rs_imm5_format();
+      break;
+
+    case opcodes::kCLZ:
+      pipeline_data_.command_result = execute_clz_format();
+      break;
+
+    case opcodes::kBDEP:
+      pipeline_data_.command_result = execute_bdep_format();
+      break;
+
+    case opcodes::kLDP:
+      execute_ldp_format();
+      break;
+
+    case opcodes::kJj:
+      execute_j_format();
+      break;
+
+    case opcodes::kSYSCALL:
+      execute_syscall_format();
+      break;
+
     default:
+      pipeline_data_.raw_instruction = 0;
       break;
   }
-  // maybe add executer for that purpose
 }
 
 void Cpu::write_back() {
@@ -90,6 +115,19 @@ void Cpu::write_back() {
 
     case opcodes::kLD:
       destination_register = std::get<MemBaseRtOffset16Format>(instruction.fields).rt;
+      break;
+
+    case opcodes::kCBIT:
+    case opcodes::kSSAT:
+      destination_register = std::get<RdRsImm5Format>(instruction.fields).rd;
+      break;
+
+    case opcodes::kCLZ:
+      destination_register = std::get<ClzFormat>(instruction.fields).rd;
+      break;
+
+    case opcodes::kBDEP:
+      destination_register = std::get<BdepFormat>(instruction.fields).rd;
       break;
 
     default:
@@ -118,14 +156,14 @@ std::uint32_t Cpu::calculate_branch_target(std::uint16_t offset) {
 }
 
 std::uint32_t Cpu::clear_bit_field(std::uint32_t value, std::uint8_t index) {
-  if (index >= 32) {
+  if (index >= kNumberOfBitsInWord) {
     return value;
   }
   return value & ~(1U << index);
 }
 
 std::uint32_t Cpu::saturate_signed(std::uint32_t value, std::uint8_t number) {
-  if (number == 0 || number > 32) {
+  if (number == 0 || number > kNumberOfBitsInWord) {
     return value;
   }
 
@@ -144,11 +182,11 @@ std::uint32_t Cpu::saturate_signed(std::uint32_t value, std::uint8_t number) {
 
 std::uint32_t Cpu::count_leading_zeros(std::uint32_t value) {
   if (value == 0) {
-    return 32;
+    return kNumberOfBitsInWord;
   }
 
   std::uint32_t count = 0;
-  for (std::uint32_t i = 32; i > 0; --i) {
+  for (std::uint32_t i = kNumberOfBitsInWord; i > 0; --i) {
     if (((value >> (i - 1)) & 1) != 0) {
       break;
     }
@@ -160,7 +198,7 @@ std::uint32_t Cpu::count_leading_zeros(std::uint32_t value) {
 std::uint32_t Cpu::bit_deposit(std::uint32_t value, std::uint32_t mask) {
   std::uint32_t result = 0;
   std::uint32_t value_bit = 0;
-  for (std::uint32_t i = 0; i < 32; ++i) {
+  for (std::uint32_t i = 0; i < kNumberOfBitsInWord; ++i) {
     if (((mask >> i) & 1) != 0) {
       if (((value >> value_bit) & 1) != 0) {
         result |= (1U << i);
@@ -255,7 +293,7 @@ void Cpu::execute_ldp_format() {
 
 void Cpu::execute_j_format() {
   const auto& format = std::get<JTarget26Format>(pipeline_data_.instruction.fields);
-  std::uint32_t pc_upper_4_bits = program_counter_ & 0xF0000000;
+  std::uint32_t pc_upper_4_bits = program_counter_ & shifts::kFirst4BitsMask;
   pipeline_data_.next_program_counter = pc_upper_4_bits | (format.target_index << 2);
   pipeline_data_.raw_instruction = 0;
 }
