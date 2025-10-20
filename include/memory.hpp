@@ -23,10 +23,11 @@ class Memory {
   std::uint32_t read_word(std::uint32_t address) const;
   void write_word(std::uint32_t address, std::uint32_t word);
 
-  std::vector<std::uint8_t> read_block(std::uint32_t address,
-                                       std::size_t size) const;
+  const std::uint8_t* read_block(std::uint32_t address,
+                                 std::size_t size) const;
   void write_block(std::uint32_t address,
-                   const std::vector<std::uint8_t>& block);
+                   const std::uint8_t* block,
+                   std::size_t size);
 
   std::size_t size() const;
   bool is_valid_address(std::uint32_t address) const;

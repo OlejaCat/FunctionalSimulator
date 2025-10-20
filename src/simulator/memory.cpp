@@ -23,9 +23,11 @@ std::uint32_t Memory::read_word(std::uint32_t address) const {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
+  const std::uint8_t* bytes = read_block(address, kWordAccessSize);
+  
   std::uint32_t value = 0;
   for (std::size_t i = 0; i < kWordAccessSize; ++i) {
-    value |= static_cast<std::uint32_t>(data_[address + i]) << (kBitInByte * i);
+    value |= static_cast<std::uint32_t>(bytes[i]) << (kBitInByte * i);
   }
 
   return value;
@@ -35,28 +37,22 @@ void Memory::write_word(std::uint32_t address, std::uint32_t word) {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
+  std::uint8_t bytes[kWordAccessSize];
   for (std::size_t i = 0; i < kWordAccessSize; ++i) {
-    data_[address + i] =
-        static_cast<std::uint8_t>((word >> (kBitInByte * i)) & kByteMask);
+    bytes[i] = static_cast<std::uint8_t>((word >> (kBitInByte * i)) & kByteMask);
   }
+
+  write_block(address, bytes, kWordAccessSize);
 }
 
-std::vector<std::uint8_t> Memory::read_block(
-    std::uint32_t address, std::size_t size) const {
+const std::uint8_t* Memory::read_block(std::uint32_t address, std::size_t size) const {
   check_address_range(address, size);
-
-  std::vector<std::uint8_t> block(size);
-  std::copy(data_.begin() + address, data_.begin() + address + size,
-            block.begin());
-
-  return block;
+  return data_.data() + address;
 }
 
-void Memory::write_block(std::uint32_t address,
-                                    const std::vector<std::uint8_t>& block) {
-  check_address_range(address, block.size());
-
-  std::copy(block.begin(), block.end(), data_.begin() + address);
+void Memory::write_block(std::uint32_t address, const std::uint8_t* block, std::size_t size) {
+  check_address_range(address, size);
+  std::copy(block, block + size, data_.data() + address);
 }
 
 std::size_t Memory::size() const {

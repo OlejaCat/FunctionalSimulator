@@ -106,6 +106,10 @@ Instruction InstructionParser::parse(std::uint32_t raw_instruction) {
         instruction.fields = format;
         break;
       }
+    case 0:
+      { 
+        break;
+      }
     default:
       throw std::runtime_error("Unknown opcode: " + std::to_string(instruction.opcode));
   }

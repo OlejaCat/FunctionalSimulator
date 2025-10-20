@@ -1,6 +1,8 @@
 #include "cpu.hpp"
 #include <sys/types.h>
 #include <cstdint>
+#include <ios>
+#include <iostream>
 #include "instruction_formats.hpp"
 #include "instruction_parser.hpp"
 #include "opcodes.hpp"
@@ -27,6 +29,25 @@ std::uint32_t Cpu::get_register(std::uint8_t index) const {
 
 void Cpu::set_register(std::uint8_t index, std::uint32_t data) {
   regirsters_[index] = data;
+}
+
+
+void Cpu::run_program() {
+  should_run_ = true; 
+
+  std::size_t cycle_count = 0;
+  while (should_run_ && cycle_count < kMaxCycles) {
+    pipeline_cycle();
+    cycle_count++;
+
+    if (pipeline_data_.instruction.opcode == 0) {
+      should_run_ = false;
+    }
+  }
+
+  if (cycle_count >= kMaxCycles) {
+    std::cout << "Stopped by cycle max limit\n";
+  }
 }
 
 void Cpu::pipeline_cycle() {
@@ -144,14 +165,23 @@ void Cpu::advance() {
 }
 
 
-std::uint32_t Cpu::sign_extend(std::uint16_t value) {
-  std::int16_t sign_value_16_bit = static_cast<std::int16_t>(value);
-  std::int32_t sign_value_32_bit = static_cast<std::int32_t>(sign_value_16_bit);
-  return static_cast<std::uint32_t>(sign_value_32_bit);
+void Cpu::print_registers() const {
+  std::cout << "PC: 0x" << std::hex << program_counter_ << "\n";
+  for (std::size_t i = 0; i < kNumberOfRegirsters; ++i) {
+    std::cout << "R" << std::dec << i << ": 0x" << std::hex << regirsters_[i] << "\n";
+  }
+  std::cout << std::dec << std::endl;
 }
 
 
-std::uint32_t Cpu::calculate_branch_target(std::uint16_t offset) {
+std::int32_t Cpu::sign_extend(std::uint16_t value) {
+  std::int16_t sign_value_16_bit = static_cast<std::int16_t>(value);
+  std::int32_t sign_value_32_bit = static_cast<std::int32_t>(sign_value_16_bit);
+  return sign_value_32_bit;
+}
+
+
+std::int32_t Cpu::calculate_branch_target(std::uint16_t offset) {
   return sign_extend(offset) << 2;
 }
 
@@ -251,7 +281,7 @@ void Cpu::execute_branch_format() {
   }
 
   if (condition) {
-    std::uint32_t target = calculate_branch_target(format.offset);
+    std::int32_t target = calculate_branch_target(format.offset);
     pipeline_data_.next_program_counter = program_counter_ + target;
   }
 

@@ -34,11 +34,12 @@ target_include_directories(simulator
 
 target_sources(simulator
     PRIVATE
-        src/main.cpp
-        src/cpu.cpp
-        src/memory.cpp
-        src/simulator.cpp
-        src/instruction_parser.cpp
+        src/simulator/main.cpp
+        src/simulator/cpu.cpp
+        src/simulator/memory.cpp
+        src/simulator/simulator.cpp
+        src/simulator/instruction_parser.cpp
+        src/simulator/interactive_simulator.cpp
 )
 
 target_link_libraries(simulator project_compiler_flags)
@@ -55,11 +56,11 @@ if(BUILD_TESTS)
     
     add_executable(tests 
         tests/instruction_parser_tests.cpp 
-        src/instruction_parser.cpp
+        src/simulator/instruction_parser.cpp
         tests/memory_tests.cpp
-        src/memory.cpp
+        src/simulator/memory.cpp
         tests/cpu_rformat_tests.cpp
-        src/cpu.cpp
+        src/simulator/cpu.cpp
     )
     target_include_directories(tests PRIVATE include/)
     if (ENABLE_DEBUG)

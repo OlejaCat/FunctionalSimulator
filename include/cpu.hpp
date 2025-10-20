@@ -14,6 +14,8 @@ class Cpu {
   static constexpr std::uint32_t kNumberOfBitsInWord = 32;
   static constexpr std::size_t kInstrucionSize = 4;
 
+  static constexpr std::size_t kMaxCycles = 1000;
+
   struct PiplelineData {
     std::uint32_t raw_instruction;
     Instruction instruction;
@@ -21,7 +23,7 @@ class Cpu {
     std::uint32_t command_result;
     std::uint32_t memory_read_data;
 
-    std::uint32_t next_program_counter;
+    std::int32_t next_program_counter;
   } pipeline_data_;
 
  public:
@@ -33,7 +35,10 @@ class Cpu {
   std::uint32_t get_register(std::uint8_t index) const;
   void set_register(std::uint8_t index, std::uint32_t data);
 
+  void run_program();
   void pipeline_cycle();
+
+  void print_registers() const;
 
  private:
   void fetch();
@@ -42,8 +47,8 @@ class Cpu {
   void write_back();
   void advance();
 
-  static std::uint32_t sign_extend(std::uint16_t value);
-  static std::uint32_t calculate_branch_target(std::uint16_t offset);
+  static std::int32_t sign_extend(std::uint16_t value);
+  static std::int32_t calculate_branch_target(std::uint16_t offset);
   static std::uint32_t clear_bit_field(std::uint32_t value, std::uint8_t index);
   static std::uint32_t saturate_signed(std::uint32_t value, std::uint8_t number);
   static std::uint32_t count_leading_zeros(std::uint32_t value);
@@ -60,10 +65,12 @@ class Cpu {
   void execute_syscall_format();
 
   std::array<std::uint32_t, kNumberOfRegirsters> regirsters_ = {0};
-  std::uint32_t program_counter_ = 0;
+  std::int32_t program_counter_ = 0;
 
   Memory& memory_;
   std::uint32_t program_address_ = 0;
+
+  bool should_run_ = false;
 };
 
 } // namespace simulator
