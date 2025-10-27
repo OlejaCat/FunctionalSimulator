@@ -64,7 +64,7 @@ class Cpu {
   void execute_j_format();
   void execute_syscall_format();
 
-  std::array<std::uint32_t, kNumberOfRegirsters> regirsters_ = {0};
+  std::array<std::uint32_t, kNumberOfRegirsters> registers_ = {0};
   std::int32_t program_counter_ = 0;
 
   Memory& memory_;

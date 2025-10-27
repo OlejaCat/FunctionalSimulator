@@ -1,6 +1,7 @@
 #include "memory.hpp"
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 
 
@@ -23,13 +24,8 @@ std::uint32_t Memory::read_word(std::uint32_t address) const {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
-  const std::uint8_t* bytes = read_block(address, kWordAccessSize);
-  
-  std::uint32_t value = 0;
-  for (std::size_t i = 0; i < kWordAccessSize; ++i) {
-    value |= static_cast<std::uint32_t>(bytes[i]) << (kBitInByte * i);
-  }
-
+  std::uint32_t value;
+  std::memcpy(&value, data_.data() + address, kWordAccessSize);
   return value;
 }
 
@@ -37,12 +33,7 @@ void Memory::write_word(std::uint32_t address, std::uint32_t word) {
   check_address_range(address, kWordAccessSize);
   check_allignment(address, kWordAccessSize);
 
-  std::uint8_t bytes[kWordAccessSize];
-  for (std::size_t i = 0; i < kWordAccessSize; ++i) {
-    bytes[i] = static_cast<std::uint8_t>((word >> (kBitInByte * i)) & kByteMask);
-  }
-
-  write_block(address, bytes, kWordAccessSize);
+  std::memcpy(data_.data() + address, &word, kWordAccessSize);
 }
 
 const std::uint8_t* Memory::read_block(std::uint32_t address, std::size_t size) const {

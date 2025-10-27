@@ -9,6 +9,8 @@ prog = init_assembler do
   add :r2, :r4, 0
   add :r3, :r3, :r5
   bne(:r3, 0, :loop)
+
+  syscall
   
 end
 

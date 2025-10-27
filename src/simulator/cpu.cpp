@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <ios>
 #include <iostream>
+
 #include "instruction_formats.hpp"
 #include "instruction_parser.hpp"
 #include "opcodes.hpp"
 #include "bit_shifts.hpp"
+#include "syscalls.hpp"
 
 
 namespace simulator {
@@ -23,30 +25,20 @@ void Cpu::set_pc(std::uint32_t program_counter) {
 }
 
 std::uint32_t Cpu::get_register(std::uint8_t index) const {
-  return regirsters_[index];
+  return registers_[index];
 }
 
 
 void Cpu::set_register(std::uint8_t index, std::uint32_t data) {
-  regirsters_[index] = data;
+  registers_[index] = data;
 }
 
 
 void Cpu::run_program() {
   should_run_ = true; 
 
-  std::size_t cycle_count = 0;
-  while (should_run_ && cycle_count < kMaxCycles) {
+  while (should_run_) {
     pipeline_cycle();
-    cycle_count++;
-
-    if (pipeline_data_.instruction.opcode == 0) {
-      should_run_ = false;
-    }
-  }
-
-  if (cycle_count >= kMaxCycles) {
-    std::cout << "Stopped by cycle max limit\n";
   }
 }
 
@@ -156,7 +148,7 @@ void Cpu::write_back() {
   }
 
   if (destination_register != 0 && destination_register < kNumberOfRegirsters) {
-    regirsters_[destination_register] = pipeline_data_.command_result;
+    registers_[destination_register] = pipeline_data_.command_result;
   }
 }
 
@@ -168,7 +160,7 @@ void Cpu::advance() {
 void Cpu::print_registers() const {
   std::cout << "PC: 0x" << std::hex << program_counter_ << "\n";
   for (std::size_t i = 0; i < kNumberOfRegirsters; ++i) {
-    std::cout << "R" << std::dec << i << ": 0x" << std::hex << regirsters_[i] << "\n";
+    std::cout << "R" << std::dec << i << ": 0x" << std::hex << registers_[i] << "\n";
   }
   std::cout << std::dec << std::endl;
 }
@@ -241,8 +233,8 @@ std::uint32_t Cpu::bit_deposit(std::uint32_t value, std::uint32_t mask) {
 
 std::uint32_t Cpu::execute_rformat() {
   const auto& format = std::get<RFormat>(pipeline_data_.instruction.fields);
-  std::uint32_t rs_data = regirsters_[format.rs];
-  std::uint32_t rt_data = regirsters_[format.rt];
+  std::uint32_t rs_data = registers_[format.rs];
+  std::uint32_t rt_data = registers_[format.rt];
   switch (pipeline_data_.instruction.opcode) {
     case opcodes::kNOR: 
       return ~(rs_data | rt_data);
@@ -257,14 +249,14 @@ std::uint32_t Cpu::execute_rformat() {
 
 std::uint32_t Cpu::execute_memformat() {
   const auto& format = std::get<MemBaseRtOffset16Format>(pipeline_data_.instruction.fields);
-  std::uint32_t address = regirsters_[format.base] + sign_extend(format.offset);
+  std::uint32_t address = registers_[format.base] + sign_extend(format.offset);
   
   switch (pipeline_data_.instruction.opcode) {
     case opcodes::kLD:
       pipeline_data_.memory_read_data = memory_.read_word(address);
       return pipeline_data_.memory_read_data;
     case opcodes::kST:
-      memory_.write_word(address, regirsters_[format.rt]);
+      memory_.write_word(address, registers_[format.rt]);
       return 0;
     default:
       return 0;
@@ -275,9 +267,9 @@ void Cpu::execute_branch_format() {
   const auto& format = std::get<BranchRsRtOffset16Format>(pipeline_data_.instruction.fields);
   bool condition = false;
   if (pipeline_data_.instruction.opcode == opcodes::kBNE) {
-    condition = (regirsters_[format.rs] != regirsters_[format.rt]);
+    condition = (registers_[format.rs] != registers_[format.rt]);
   } else if (pipeline_data_.instruction.opcode == opcodes::kBEQ) {
-    condition = (regirsters_[format.rs] == regirsters_[format.rt]);
+    condition = (registers_[format.rs] == registers_[format.rt]);
   }
 
   if (condition) {
@@ -290,7 +282,7 @@ void Cpu::execute_branch_format() {
 
 std::uint32_t Cpu::execute_rd_rs_imm5_format() {
   const auto& format = std::get<RdRsImm5Format>(pipeline_data_.instruction.fields);
-  std::uint32_t rs_data = regirsters_[format.rs];
+  std::uint32_t rs_data = registers_[format.rs];
   switch (pipeline_data_.instruction.opcode) {
     case opcodes::kCBIT:
       return clear_bit_field(rs_data, format.imm5);
@@ -303,20 +295,20 @@ std::uint32_t Cpu::execute_rd_rs_imm5_format() {
 
 std::uint32_t Cpu::execute_clz_format() {
   const auto& format = std::get<ClzFormat>(pipeline_data_.instruction.fields);
-  return count_leading_zeros(regirsters_[format.rs]);
+  return count_leading_zeros(registers_[format.rs]);
 }
 
 std::uint32_t Cpu::execute_bdep_format() {
   const auto& format = std::get<BdepFormat>(pipeline_data_.instruction.fields);
-  return bit_deposit(regirsters_[format.rs1], regirsters_[format.rs2]);
+  return bit_deposit(registers_[format.rs1], registers_[format.rs2]);
 }
 
 void Cpu::execute_ldp_format() {
   const auto& format = std::get<LdpFormat>(pipeline_data_.instruction.fields);
-  std::uint32_t address = regirsters_[format.base] + sign_extend(format.offset);
+  std::uint32_t address = registers_[format.base] + sign_extend(format.offset);
 
-  regirsters_[format.rt1] = memory_.read_word(address);
-  regirsters_[format.rt2] = memory_.read_word(address + kInstrucionSize);
+  registers_[format.rt1] = memory_.read_word(address);
+  registers_[format.rt2] = memory_.read_word(address + kInstrucionSize);
 
   pipeline_data_.raw_instruction = 0;
 } 
@@ -329,7 +321,17 @@ void Cpu::execute_j_format() {
 }
 
 void Cpu::execute_syscall_format() {
-  const auto& format = std::get<SyscallFormat>(pipeline_data_.instruction.fields);
+  std::uint32_t syscall_number = registers_[syscalls::kNumberRegister];
+  
+  std::uint32_t result = 0;
+  switch (syscall_number) {
+    case syscalls::EXIT:
+      should_run_ = false;
+      break;
+  }
+
+  registers_[syscalls::kResult] = result;
+
 }
 
 } // namespace simulator
